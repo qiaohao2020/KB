@@ -1,0 +1,35 @@
+<!-- 左侧导航栏 -->
+<div class="sidebar">
+    <div class="logo">
+        <img src="../images/logo.jpg" alt="QuickSearch Logo">
+        <h1>QuickSearch</h1>
+    </div>
+    <div class="nav-menu">
+        <div class="nav-item" :class="{active: currentPage === 'knowledge'}">
+            <i class="bi bi-book"></i>
+            <a href="knowledge.html" style="text-decoration: none; color: inherit;">
+                <span>知识库</span>
+            </a>
+        </div>
+        <div class="nav-item" :class="{active: currentPage === 'search'}">
+            <i class="bi bi-search"></i>
+            <a href="search.html" style="text-decoration: none; color: inherit;">
+                <span>内容检索</span>
+            </a>
+        </div>
+        <div class="nav-item" :class="{active: currentPage === 'chat'}">
+            <i class="bi bi-chat-dots"></i>
+            <a href="chat.html" style="text-decoration: none; color: inherit;">
+                <span>智能问答</span>
+            </a>
+        </div>
+        <div class="nav-item" :class="{active: currentPage === 'history'}">
+            <i class="bi bi-clock-history"></i>
+            <span>历史记录</span>
+        </div>
+        <div class="nav-item" :class="{active: currentPage === 'settings'}">
+            <i class="bi bi-gear"></i>
+            <span>设置</span>
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,40 @@
+{
+    "categories": [
+        {
+            "id": 1,
+            "name": "产品文档",
+            "children": [
+                { "id": 11, "name": "用户手册" },
+                { "id": 12, "name": "API文档" }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "常见问题",
+            "children": [
+                { "id": 21, "name": "安装问题" },
+                { "id": 22, "name": "使用问题" }
+            ]
+        }
+    ],
+    "knowledgeItems": [
+        {
+            "id": 1,
+            "title": "如何安装 QuickSearch",
+            "category": "安装问题",
+            "content": "安装步骤说明...",
+            "tags": ["安装", "配置"],
+            "status": "active",
+            "createTime": "2024-04-27"
+        },
+        {
+            "id": 2,
+            "title": "API 接口说明",
+            "category": "API文档",
+            "content": "API 接口详细说明...",
+            "tags": ["API", "开发"],
+            "status": "active",
+            "createTime": "2024-04-27"
+        }
+    ]
+} 

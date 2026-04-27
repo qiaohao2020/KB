@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>侧边栏聊天</title>
+    <link href="../../public/dist/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../../public/dist/highlight.js@11.7.0/styles/github.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        .sidebar-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* 功能按钮区域样式 */
+        .function-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+
+        .function-button {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .function-button:hover {
+            background: #f0f2f5;
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        .function-button i {
+            font-size: 14px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fff;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .message.received {
+            flex-direction: row;
+        }
+
+        .message.sent {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            margin: 0 10px;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-break: break-word;
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        .received .message-content {
+            background: #f0f2f5;
+            color: #333;
+        }
+
+        .sent .message-content {
+            background: #007bff;
+            color: white;
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            position: relative;
+        }
+
+        .chat-input textarea {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            resize: none;
+            min-height: 32px;
+            max-height: 200px;
+            overflow-y: auto;
+            line-height: 1.5;
+            font-family: inherit;
+        }
+
+        .chat-input textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .chat-input button {
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 14px;
+            align-self: flex-end;
+            margin-top: 4px;
+        }
+
+        .chat-input button:hover {
+            background: #0056b3;
+        }
+
+        /* 滚动条样式 */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f8f9fa;
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        @media screen and (max-width: 576px) {
+            .message-content {
+                max-width: 85%;
+            }
+
+            .chat-input textarea {
+                padding: 8px 12px;
+                font-size: 13px;
+                max-height: 150px;
+            }
+
+            .chat-input button {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            
+            .function-button {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar-container">
+        <div class="chat-messages" id="chatMessages">
+            <!-- 消息将在这里动态添加 -->
+        </div>
+        
+        <!-- 功能按钮区域 - 移动到输入框上方 -->
+        <div class="function-buttons">
+            <button class="function-button" id="summarizeBtn">
+                <i class="fas fa-file-alt"></i> 摘要当前内容
+            </button>
+            <button class="function-button" id="generateApiBtn">
+                <i class="fas fa-code"></i> 生成接口代码
+            </button>
+            <button class="function-button" id="translateBtn">
+                <i class="fas fa-language"></i> 翻译成中文
+            </button>
+            <button class="function-button" id="explainCodeBtn">
+                <i class="fas fa-question-circle"></i> 解释代码
+            </button>
+            <button class="function-button" id="optimizeCodeBtn">
+                <i class="fas fa-magic"></i> 优化代码
+            </button>
+        </div>
+        
+        <div class="chat-input">
+            <textarea id="messageInput" placeholder="输入消息..."></textarea>
+            <button id="sendMessage">
+                <i class="fas fa-paper-plane"></i> 发送
+            </button>
+        </div>
+    </div>
+    <script src="../dist/highlight.js@11.7.0/highlight.min.js"></script>
+    <script src="sidebar.js"></script>
+</body>
+</html> 

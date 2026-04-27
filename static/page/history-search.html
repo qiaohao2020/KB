@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史问答搜索 - QuickSearch</title>
+    <link rel="stylesheet" href="../css/knowledge.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <style>
+        /* 全局样式 */
+        :root {
+            --primary-color: #4a6cf7;
+            --primary-hover: #3a5ce4;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7fafc;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            margin: 0;
+            padding: 0;
+        }
+
+        .knowledge-container {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            width: 100%;
+            max-width: none;
+        }
+
+        /* 搜索框样式 */
+        .search-box {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 0;
+        }
+
+        .search-box:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .search-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            resize: vertical;
+            font-size: 15px;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .search-options {
+            display: flex;
+            gap: 12px;
+        }
+
+        .search-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .search-option:hover {
+            background: var(--bg-primary);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .search-option.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .search-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .search-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .search-btn:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 搜索结果样式 */
+        .search-results {
+            margin-top: 24px;
+        }
+
+        .result-item {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .result-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            padding: 16px;
+            border-radius: 12px;
+            line-height: 1.6;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .message:hover {
+            transform: translateX(4px);
+        }
+
+        .message.user {
+            background: #e3f2fd;
+            align-self: flex-end;
+            max-width: 80%;
+            border-bottom-right-radius: 0;
+        }
+
+        .message.ai {
+            background: var(--bg-secondary);
+            align-self: flex-start;
+            max-width: 80%;
+            border-bottom-left-radius: 0;
+        }
+
+        .message-text {
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+
+        .message-time {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            text-align: right;
+        }
+
+        .similarity {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .similarity i {
+            color: var(--primary-color);
+        }
+
+        /* 加载和错误状态 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+
+        .loading i {
+            margin-right: 12px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            color: #dc3545;
+            padding: 16px;
+            background-color: #f8d7da;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .error i {
+            font-size: 1.2em;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.1em;
+            margin-top: 12px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .search-box {
+                padding: 16px;
+            }
+
+            .search-actions {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .search-options {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .search-option {
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+
+            .search-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="knowledge-container">
+            <!-- 使用公共侧边栏组件 -->
+            <sidebar-component :current-page="'history'"></sidebar-component>
+            <!-- 主内容区域 -->
+            <div class="main-content">
+                <!-- 搜索区域 -->
+                <div class="search-box">
+                    <textarea class="search-input" v-model="searchText" placeholder="请输入要搜索的文本段落..."
+                        @keydown.enter.prevent="search"></textarea>
+                    <div class="search-actions">
+                        <div class="search-options">
+                            <div class="search-option" :class="{active: searchType === 'question'}"
+                                @click="setSearchType('question')">
+                                <i class="bi bi-question-circle"></i>
+                                <span>问题</span>
+                            </div>
+                            <div class="search-option" :class="{active: searchType === 'answer'}"
+                                @click="setSearchType('answer')">
+                                <i class="bi bi-chat-dots"></i>
+                                <span>回答</span>
+                            </div>
+                            <div class="search-option" :class="{active: searchType === 'both'}"
+                                @click="setSearchType('both')">
+                                <i class="bi bi-arrows-angle-contract"></i>
+                                <span>全部</span>
+                            </div>
+                        </div>
+                        <button class="search-btn" @click="search" :disabled="isLoading || !searchText.trim()">
+                            <i class="bi bi-search"></i>
+                            <span>搜索</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 搜索结果区域 -->
+                <div class="search-results">
+                    <div v-if="isLoading" class="loading">
+                        <i class="bi bi-arrow-repeat"></i> 搜索中...
+                    </div>
+                    <div v-else-if="errorMessage" class="error">
+                        {{errorMessage}}
+                    </div>
+                    <div v-else-if="searchResults.length === 0" class="empty-state">
+                        <i class="bi bi-search"></i>
+                        <p>暂无搜索结果</p>
+                    </div>
+                    <div v-else>
+                        <div class="result-item" v-for="result in searchResults" :key="result.id">
+                            <div class="result-header">
+                                <div class="result-meta">
+                                    <span>{{result.date}}</span>
+                                    <span>相似度: {{(result.similarity * 100).toFixed(2)}}%</span>
+                                </div>
+                            </div>
+                            <div class="result-content">
+                                <div class="message user">
+                                    <div class="message-text">{{result.question}}</div>
+                                    <div class="message-time">{{result.questionTime}}</div>
+                                </div>
+                                <div class="message ai">
+                                    <div class="message-text">{{result.answer}}</div>
+                                    <div class="message-time">{{result.answerTime}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+        const { createApp, ref } = Vue;
+
+        // 注册侧边栏组件
+        const SidebarComponent = {
+            props: ['currentPage'],
+            template: await fetch('../components/sidebar.html').then(response => response.text())
+        };
+
+        const app = createApp({
+            components: {
+                'sidebar-component': SidebarComponent
+            },
+            setup() {
+                const searchText = ref('');
+                const searchType = ref('both');
+                const searchResults = ref([]);
+                const isLoading = ref(false);
+                const errorMessage = ref('');
+
+                // 设置搜索类型
+                function setSearchType(type) {
+                    searchType.value = type;
+                }
+
+                // 搜索功能
+                async function search() {
+                    if (!searchText.value.trim() || isLoading.value) return;
+
+                    isLoading.value = true;
+                    errorMessage.value = '';
+                    searchResults.value = [];
+
+                    try {
+                        // 模拟API调用
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+
+                        // 模拟搜索结果
+                        searchResults.value = [
+                            {
+                                id: 1,
+                                date: '2024-03-20',
+                                similarity: 0.85,
+                                question: '什么是人工智能？',
+                                questionTime: '10:30',
+                                answer: '人工智能（AI）是计算机科学的一个分支，它致力于创造能够模拟人类智能的机器。这些机器可以学习、推理、解决问题、理解自然语言、识别图像和声音等。',
+                                answerTime: '10:31'
+                            },
+                            {
+                                id: 2,
+                                date: '2024-03-19',
+                                similarity: 0.75,
+                                question: '机器学习有哪些主要类型？',
+                                questionTime: '15:45',
+                                answer: '机器学习主要分为三种类型：1. 监督学习：使用标记数据进行训练；2. 无监督学习：从未标记数据中发现模式；3. 强化学习：通过与环境交互来学习最优策略。',
+                                answerTime: '15:46'
+                            }
+                        ];
+                    } catch (error) {
+                        console.error('搜索失败:', error);
+                        errorMessage.value = '搜索失败，请重试';
+                    } finally {
+                        isLoading.value = false;
+                    }
+                }
+
+                return {
+                    searchText,
+                    searchType,
+                    searchResults,
+                    isLoading,
+                    errorMessage,
+                    setSearchType,
+                    search
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

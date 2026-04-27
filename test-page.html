@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickSearch 组件测试页面</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 36px;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .header p {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .test-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .test-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+    }
+
+    .test-card h2 {
+      color: #4a6cf7;
+      font-size: 20px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .test-card h2 i {
+      font-size: 24px;
+    }
+
+    .test-section {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .test-section h2 {
+      color: #4a6cf7;
+      font-size: 24px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #app {
+      min-height: 400px;
+    }
+
+    .demo-container {
+      background: rgba(247, 250, 252, 0.5);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .info-box {
+      background: rgba(74, 108, 247, 0.1);
+      border-left: 4px solid #4a6cf7;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #2d3748;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .test-button {
+      padding: 10px 20px;
+      background: linear-gradient(45deg, #4a6cf7, #667eea);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(74, 108, 247, 0.3);
+    }
+
+    .test-button:hover {
+      background: linear-gradient(45deg, #3a5ce4, #5a6fd8);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(74, 108, 247, 0.4);
+    }
+
+    .test-button:active {
+      transform: translateY(0);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .status-badge.success {
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+    }
+
+    .status-badge.warning {
+      background: rgba(251, 191, 36, 0.1);
+      color: #fbbf24;
+    }
+
+    .footer {
+      text-align: center;
+      color: white;
+      margin-top: 40px;
+      padding: 20px;
+      opacity: 0.8;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #718096;
+    }
+
+    .loading i {
+      font-size: 48px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .component-preview {
+      border: 2px dashed rgba(74, 108, 247, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+      background: white;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin-top: 12px;
+    }
+
+    .feature-list li {
+      padding: 8px 0;
+      color: #4a5568;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-list li i {
+      color: #4a6cf7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="bi bi-lightning-charge-fill"></i> QuickSearch 组件测试页面</h1>
+      <p>浏览器插件项目 - 组件功能测试与演示</p>
+    </div>
+
+    <div class="test-grid">
+      <div class="test-card">
+        <h2><i class="bi bi-chat-dots"></i> MessageInput 组件</h2>
+        <p>消息输入组件，支持系统提示词和模型选择</p>
+        <ul class="feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> 手动拖拽调整高度</li>
+          <li><i class="bi bi-check-circle-fill"></i> 系统提示词选择</li>
+          <li><i class="bi bi-check-circle-fill"></i> 模型选择器</li>
+          <li><i class="bi bi-check-circle-fill"></i> 字数统计</li>
+        </ul>
+        <div class="button-group">
+          <button class="test-button" onclick="loadComponent('message-input')">
+            <i class="bi bi-play-fill"></i> 测试组件
+          </button>
+        </div>
+      </div>
+
+      <div class="test-card">
+        <h2><i class="bi bi-robot"></i> SystemPromptSelector</h2>
+        <p>系统提示词选择器，独立组件</p>
+        <ul class="feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> 提示词列表</li>
+          <li><i class="bi bi-check-circle-fill"></i> 添加/编辑/删除</li>
+          <li><i class="bi bi-check-circle-fill"></i> 下拉菜单</li>
+        </ul>
+        <div class="button-group">
+          <button class="test-button" onclick="loadComponent('system-prompt')">
+            <i class="bi bi-play-fill"></i> 测试组件
+          </button>
+        </div>
+      </div>
+
+      <div class="test-card">
+        <h2><i class="bi bi-cpu"></i> ModelSelector</h2>
+        <p>模型选择器，独立组件</p>
+        <ul class="feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> 模型列表</li>
+          <li><i class="bi bi-check-circle-fill"></i> 状态显示</li>
+          <li><i class="bi bi-check-circle-fill"></i> 快速切换</li>
+        </ul>
+        <div class="button-group">
+          <button class="test-button" onclick="loadComponent('model-selector')">
+            <i class="bi bi-play-fill"></i> 测试组件
+          </button>
+        </div>
+      </div>
+
+      <div class="test-card">
+        <h2><i class="bi bi-layout-sidebar"></i> 完整布局</h2>
+        <p>测试完整的聊天界面布局</p>
+        <ul class="feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> 侧边栏</li>
+          <li><i class="bi bi-check-circle-fill"></i> 聊天容器</li>
+          <li><i class="bi bi-check-circle-fill"></i> 消息输入</li>
+        </ul>
+        <div class="button-group">
+          <button class="test-button" onclick="loadComponent('full-layout')">
+            <i class="bi bi-play-fill"></i> 测试布局
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h2><i class="bi bi-display"></i> 组件预览区域</h2>
+      <div class="info-box">
+        <i class="bi bi-info-circle"></i> 点击上方按钮加载对应的组件进行测试
+      </div>
+      <div id="app" class="component-preview">
+        <div class="loading">
+          <i class="bi bi-box"></i>
+          <p style="margin-top: 16px;">选择一个组件开始测试</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>QuickSearch Browser Extension - Vue 3 + Vite</p>
+      <p style="margin-top: 8px; font-size: 14px;">
+        <i class="bi bi-github"></i> 浏览器插件项目测试环境
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createApp } from 'vue'
+    import MessageInput from './src/components/MessageInput.vue'
+    import SystemPromptSelector from './src/components/SystemPromptSelector.vue'
+    import ModelSelector from './src/components/ModelSelector.vue'
+
+    let currentApp = null
+
+    window.loadComponent = function(componentName) {
+      // 清理之前的实例
+      if (currentApp && typeof currentApp.unmount === 'function') {
+        try {
+          currentApp.unmount()
+        } catch (e) {
+          console.warn('卸载组件时出错:', e)
+        }
+        currentApp = null
+      }
+
+      const appContainer = document.getElementById('app')
+      appContainer.innerHTML = ''
+
+      // 根据组件名称加载不同的组件
+      switch(componentName) {
+        case 'message-input':
+          loadMessageInput()
+          break
+        case 'system-prompt':
+          loadSystemPromptSelector()
+          break
+        case 'model-selector':
+          loadModelSelector()
+          break
+        case 'full-layout':
+          loadFullLayout()
+          break
+      }
+    }
+
+    function loadMessageInput() {
+      const app = createApp({
+        components: { MessageInput },
+        template: `
+          <div style="max-width: 800px; margin: 0 auto;">
+            <h3 style="color: #4a6cf7; margin-bottom: 16px;">
+              <i class="bi bi-chat-dots"></i> MessageInput 组件测试
+            </h3>
+            <MessageInput
+              :is-loading="isLoading"
+              :prompts="prompts"
+              :system-prompts="systemPrompts"
+              :available-models="availableModels"
+              :selected-system-prompt="selectedSystemPrompt"
+              :selected-model="selectedModel"
+              @send-message="handleSendMessage"
+              @select-system-prompt="handleSelectSystemPrompt"
+              @select-model="handleSelectModel"
+              @add-system-prompt="handleAddSystemPrompt"
+            />
+            <div style="margin-top: 20px; padding: 16px; background: rgba(74, 108, 247, 0.05); border-radius: 12px;">
+              <h4 style="color: #4a6cf7; margin-bottom: 12px;">事件日志：</h4>
+              <div v-for="(log, index) in logs" :key="index" style="padding: 8px; background: white; border-radius: 8px; margin-bottom: 8px; font-size: 14px;">
+                <strong>{{ log.type }}:</strong> {{ log.message }}
+              </div>
+            </div>
+          </div>
+        `,
+        data() {
+          return {
+            isLoading: false,
+            logs: [],
+            prompts: [
+              { id: 1, name: '代码审查', content: '请帮我审查以下代码...', isDefault: true },
+              { id: 2, name: '翻译', content: '请将以下内容翻译成英文...' }
+            ],
+            systemPrompts: [
+              { id: 1, name: '专业助手', description: '专业的AI助手', content: '你是一个专业的AI助手' },
+              { id: 2, name: '代码专家', description: '精通编程的专家', content: '你是一个代码专家' }
+            ],
+            availableModels: [
+              { id: 'gpt-4', name: 'GPT-4', description: '最新的GPT-4模型', status: 'available', statusText: '可用' },
+              { id: 'gpt-3.5', name: 'GPT-3.5', description: '快速响应', status: 'available', statusText: '可用' }
+            ],
+            selectedSystemPrompt: null,
+            selectedModel: null
+          }
+        },
+        methods: {
+          handleSendMessage(message) {
+            this.logs.unshift({ type: '发送消息', message: message })
+            this.isLoading = true
+            setTimeout(() => { this.isLoading = false }, 2000)
+          },
+          handleSelectSystemPrompt(prompt) {
+            this.selectedSystemPrompt = prompt
+            this.logs.unshift({ type: '选择系统提示词', message: prompt ? prompt.name : '默认' })
+          },
+          handleSelectModel(model) {
+            this.selectedModel = model
+            this.logs.unshift({ type: '选择模型', message: model.name })
+          },
+          handleAddSystemPrompt() {
+            this.logs.unshift({ type: '添加系统提示词', message: '触发添加对话框' })
+          }
+        }
+      })
+      app.mount('#app')
+      currentApp = app
+    }
+
+    function loadSystemPromptSelector() {
+      const app = createApp({
+        components: { SystemPromptSelector },
+        template: `
+          <div style="max-width: 600px; margin: 0 auto;">
+            <h3 style="color: #4a6cf7; margin-bottom: 16px;">
+              <i class="bi bi-robot"></i> SystemPromptSelector 组件测试
+            </h3>
+            <div style="padding: 20px; background: rgba(247, 250, 252, 0.5); border-radius: 12px;">
+              <SystemPromptSelector
+                :prompts="prompts"
+                :selected-prompt="selectedPrompt"
+                @select="handleSelect"
+                @add="handleAdd"
+                @edit="handleEdit"
+                @delete="handleDelete"
+              />
+            </div>
+            <div style="margin-top: 20px; padding: 16px; background: rgba(74, 108, 247, 0.05); border-radius: 12px;">
+              <h4 style="color: #4a6cf7; margin-bottom: 12px;">当前选择：</h4>
+              <p style="font-size: 16px; font-weight: 600;">{{ selectedPrompt ? selectedPrompt.name : '默认' }}</p>
+            </div>
+          </div>
+        `,
+        data() {
+          return {
+            prompts: [
+              { id: 1, name: '专业助手', description: '专业的AI助手', content: '你是一个专业的AI助手' },
+              { id: 2, name: '代码专家', description: '精通编程的专家', content: '你是一个代码专家' },
+              { id: 3, name: '翻译助手', description: '多语言翻译', content: '你是一个翻译助手' }
+            ],
+            selectedPrompt: null
+          }
+        },
+        methods: {
+          handleSelect(prompt) {
+            this.selectedPrompt = prompt
+            console.log('选择提示词:', prompt)
+          },
+          handleAdd() {
+            console.log('添加提示词')
+            alert('触发添加提示词')
+          },
+          handleEdit(prompt) {
+            console.log('编辑提示词:', prompt)
+            alert('编辑: ' + prompt.name)
+          },
+          handleDelete(id) {
+            console.log('删除提示词:', id)
+            this.prompts = this.prompts.filter(p => p.id !== id)
+          }
+        }
+      })
+      app.mount('#app')
+      currentApp = app
+    }
+
+    function loadModelSelector() {
+      const app = createApp({
+        components: { ModelSelector },
+        template: `
+          <div style="max-width: 600px; margin: 0 auto;">
+            <h3 style="color: #4a6cf7; margin-bottom: 16px;">
+              <i class="bi bi-cpu"></i> ModelSelector 组件测试
+            </h3>
+            <div style="padding: 20px; background: rgba(247, 250, 252, 0.5); border-radius: 12px;">
+              <ModelSelector
+                :models="models"
+                :selected-model="selectedModel"
+                @select="handleSelect"
+              />
+            </div>
+            <div style="margin-top: 20px; padding: 16px; background: rgba(74, 108, 247, 0.05); border-radius: 12px;">
+              <h4 style="color: #4a6cf7; margin-bottom: 12px;">当前模型：</h4>
+              <p style="font-size: 16px; font-weight: 600;">{{ selectedModel ? selectedModel.name : 'GPT-4' }}</p>
+              <p style="font-size: 14px; color: #718096; margin-top: 8px;">{{ selectedModel ? selectedModel.description : '' }}</p>
+            </div>
+          </div>
+        `,
+        data() {
+          return {
+            models: [
+              { id: 'gpt-4', name: 'GPT-4', description: '最新的GPT-4模型，性能强大', status: 'available', statusText: '可用' },
+              { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: '快速响应，成本较低', status: 'available', statusText: '可用' },
+              { id: 'claude-3', name: 'Claude-3', description: 'Anthropic的Claude-3模型', status: 'limited', statusText: '受限' },
+              { id: 'gemini-pro', name: 'Gemini Pro', description: 'Google的Gemini模型', status: 'unavailable', statusText: '不可用' }
+            ],
+            selectedModel: null
+          }
+        },
+        methods: {
+          handleSelect(model) {
+            this.selectedModel = model
+            console.log('选择模型:', model)
+          }
+        }
+      })
+      app.mount('#app')
+      currentApp = app
+    }
+
+    function loadFullLayout() {
+      const app = createApp({
+        components: { MessageInput },
+        template: `
+          <div style="height: 600px; display: flex; flex-direction: column; background: white; border-radius: 12px; overflow: hidden;">
+            <div style="padding: 16px; background: linear-gradient(45deg, #4a6cf7, #667eea); color: white;">
+              <h3><i class="bi bi-chat-square-text"></i> 完整聊天界面</h3>
+            </div>
+            <div style="flex: 1; padding: 20px; overflow-y: auto; background: rgba(247, 250, 252, 0.5);">
+              <div v-for="msg in messages" :key="msg.id" style="margin-bottom: 16px; padding: 12px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <strong style="color: #4a6cf7;">{{ msg.role }}:</strong> {{ msg.content }}
+              </div>
+            </div>
+            <MessageInput
+              :is-loading="isLoading"
+              :system-prompts="systemPrompts"
+              :available-models="availableModels"
+              @send-message="handleSendMessage"
+            />
+          </div>
+        `,
+        data() {
+          return {
+            isLoading: false,
+            messages: [
+              { id: 1, role: '用户', content: '你好，请介绍一下Vue 3的新特性' },
+              { id: 2, role: '助手', content: 'Vue 3引入了Composition API、更好的TypeScript支持、性能优化等特性...' }
+            ],
+            systemPrompts: [
+              { id: 1, name: '专业助手', content: '你是一个专业的AI助手' }
+            ],
+            availableModels: [
+              { id: 'gpt-4', name: 'GPT-4', description: '最新模型', status: 'available', statusText: '可用' }
+            ]
+          }
+        },
+        methods: {
+          handleSendMessage(message) {
+            this.messages.push({ id: Date.now(), role: '用户', content: message })
+            this.isLoading = true
+            setTimeout(() => {
+              this.messages.push({ id: Date.now() + 1, role: '助手', content: '这是一个模拟回复...' })
+              this.isLoading = false
+            }, 1500)
+          }
+        }
+      })
+      app.mount('#app')
+      currentApp = app
+    }
+  </script>
+</body>
+</html>

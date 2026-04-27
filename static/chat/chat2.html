@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickSearch</title>
+    <link rel="stylesheet" href="../css/chat2.css">
+
+
+    <script src="../../public/libs/vue@3.5.13/dist/vue.global.js"></script>
+    <script src="../../public/libs/markedjs/marked/marked.min.js"></script>
+    <script src="../../public/libs/highlight.js@11.7.0/lib/highlight.min.js"></script>
+    <link href="../../public/libs/highlight.js@11.7.0/styles/github.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>QuickSearch</h1>
+            </div>
+            <div class="sidebar-content">
+                <div class="nav-items">
+                    <div v-for="item in navItems" 
+                         :key="item.id" 
+                         :class="['nav-item', { active: selectedCategory === item.id }]"
+                         @click="selectedCategory = item.id">
+                        <span class="nav-icon">{{ item.icon }}</span>
+                        <span class="nav-text">{{ item.text }}</span>
+                    </div>
+                </div>
+                <div class="chat-list">
+                    <div v-for="chat in chats" 
+                         :key="chat.id" 
+                         :class="['chat-item', { active: currentChatId === chat.id }]"
+                         @click="switchChat(chat.id)">
+                        <span class="chat-title">{{ chat.title }}</span>
+                        <button class="delete-chat" @click.stop="deleteChat(chat.id)">×</button>
+                    </div>
+                </div>
+                <button class="new-chat-btn" @click="createNewChat">新建对话</button>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="chat-container">
+                <div class="messages" ref="messagesContainer">
+                    <div v-for="message in messages" 
+                         :key="message.id" 
+                         :class="['message', message.role]">
+                        <div class="message-content" v-html="renderMarkdown(message.content)"></div>
+                        <div class="message-actions">
+                            <button @click="copyMessage(message)">复制</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-container">
+                    <textarea v-model="inputMessage" 
+                              @keydown.enter.prevent="sendMessage"
+                              placeholder="输入消息..."></textarea>
+                    <button @click="sendMessage">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="chat2.js"></script>
+</body>
+</html>

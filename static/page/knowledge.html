@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识库管理 - QuickSearch</title>
+    <link rel="stylesheet" href="../css/knowledge.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+<div id="app">
+    <div class="knowledge-container">
+        <!-- 使用公共侧边栏组件 -->
+        <sidebar-component :current-page="'knowledge'"></sidebar-component>
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- 顶部操作栏 -->
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box">
+                        <input type="text" v-model="searchTerm" placeholder="搜索知识库...">
+                        <button class="search-btn" @click="searchKnowledge">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    <div class="filter-group">
+                        <select v-model="filterCategory">
+                            <option value="">全部分类</option>
+                            <option v-for="cat in flatCategories" :key="cat.id" :value="cat.name">{{cat.name}}</option>
+                        </select>
+                        <select v-model="filterStatus">
+                            <option value="">全部状态</option>
+                            <option value="active">已发布</option>
+                            <option value="draft">草稿</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="toolbar-right">
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" @click="showAddKnowledge">
+                            <i class="bi bi-plus-lg"></i> 添加知识
+                        </button>
+                        <button class="btn btn-secondary" @click="showImportModal">
+                            <i class="bi bi-upload"></i> 导入
+                        </button>
+                        <button class="btn btn-secondary" @click="exportKnowledge">
+                            <i class="bi bi-download"></i> 导出
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- 内容区域 -->
+            <div class="content-area">
+                <!-- 知识分类树 -->
+                <div class="category-tree">
+                    <div class="tree-header">
+                        <h3>知识分类</h3>
+                        <div class="tree-actions">
+                            <button class="btn-icon" @click="showAddCategoryModal">
+                                <i class="bi bi-plus-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tree-content">
+                        <template v-for="cat in categories">
+                            <div class="category-item" :class="{active: currentCategory === cat.name}" @click="selectCategory(cat.name)">
+                                <div class="category-header">
+                                    <i class="bi bi-folder"></i>
+                                    <span>{{cat.name}}</span>
+                                </div>
+                                <div class="category-children">
+                                    <div class="category-child" v-for="child in cat.children" :key="child.id" :class="{active: currentCategory === child.name}" @click.stop="selectCategory(child.name)">
+                                        <i class="bi bi-file-text"></i>
+                                        <span>{{child.name}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <!-- 知识列表 -->
+                <div class="knowledge-list">
+                    <div class="list-header">
+                        <div class="list-info">
+                            <span class="total-count">共 <span>{{filteredKnowledge.length}}</span> 条知识</span>
+                        </div>
+                    </div>
+                    <div class="list-content">
+                        <div class="knowledge-item" v-for="item in filteredKnowledge" :key="item.id">
+                            <div class="item-header">
+                                <h3>{{item.title}}</h3>
+                                <div class="item-meta">
+                                    <span class="category">{{item.category}}</span>
+                                    <span class="status" :class="item.status">{{item.status === 'active' ? '已发布' : '草稿'}}</span>
+                                    <span class="time">{{item.createTime}}</span>
+                                    <div class="item-actions">
+                                        <button class="btn-icon" @click="editKnowledge(item)"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn-icon" @click="deleteKnowledge(item)"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item-content">
+                                <p>{{item.content}}</p>
+                                <div class="item-tags">
+                                    <span class="tag" v-for="tag in item.tags" :key="tag">{{tag}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 右侧编辑区域 -->
+        <div class="edit-sidebar" style="display: none;">
+            <div class="edit-header">
+                <h2>编辑知识</h2>
+                <div class="edit-actions">
+                    <button class="btn btn-save" id="saveKnowledge">
+                        <i class="bi bi-check-lg"></i> 保存
+                    </button>
+                    <button class="btn btn-cancel" id="cancelEdit">
+                        <i class="bi bi-x-lg"></i> 取消
+                    </button>
+                </div>
+            </div>
+            <div class="edit-content">
+                <form id="knowledgeForm">
+                    <div class="form-group">
+                        <label>标题</label>
+                        <input type="text" id="knowledgeTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>分类</label>
+                        <select id="knowledgeCategory" required>
+                            <option value="">请选择分类</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>内容</label>
+                        <textarea id="knowledgeContent" rows="10" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>标签</label>
+                        <div class="tags-input">
+                            <input type="text" id="knowledgeTags" placeholder="输入标签，用逗号分隔">
+                            <div class="tags-preview" id="tagsPreview"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <div class="status-select">
+                            <select id="knowledgeStatus">
+                                <option value="draft">草稿</option>
+                                <option value="active">发布</option>
+                            </select>
+                            <span class="status-badge" id="statusBadge">草稿</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>创建时间</label>
+                        <input type="text" id="createTime" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>更新时间</label>
+                        <input type="text" id="updateTime" readonly>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- 导入知识库对话框 -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>导入知识库</h3>
+                <button class="btn-icon close-modal">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="import-options">
+                    <div class="import-option">
+                        <input type="radio" id="importTypeFile" name="importType" value="file" checked>
+                        <label for="importTypeFile">从文件导入</label>
+                    </div>
+                    <div class="import-option">
+                        <input type="radio" id="importTypeDB" name="importType" value="db">
+                        <label for="importTypeDB">从数据库导入</label>
+                    </div>
+                    <div class="import-option">
+                        <input type="radio" id="importTypeText" name="importType" value="text">
+                        <label for="importTypeText">从文本导入</label>
+                    </div>
+                </div>
+                <div class="import-content">
+                    <div class="file-upload" id="fileUploadSection">
+                        <div class="upload-area" id="uploadArea">
+                            <i class="bi bi-cloud-upload"></i>
+                            <p>拖拽文件到此处或点击上传</p>
+                            <input type="file" id="fileInput" accept=".json,.txt,.md" style="display: none;">
+                        </div>
+                        <div class="file-info" id="fileInfo" style="display: none;">
+                            <span class="file-name"></span>
+                            <button class="btn-icon remove-file">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="db-import" id="dbImportSection" style="display: none;">
+                        <div class="db-form">
+                            <div class="form-group">
+                                <label>数据库类型</label>
+                                <select id="dbType">
+                                    <option value="mysql">MySQL</option>
+                                    <option value="postgresql">PostgreSQL</option>
+                                    <option value="sqlserver">SQL Server</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>主机地址</label>
+                                <input type="text" id="dbHost" placeholder="例如：localhost">
+                            </div>
+                            <div class="form-group">
+                                <label>端口</label>
+                                <input type="text" id="dbPort" placeholder="例如：3306">
+                            </div>
+                            <div class="form-group">
+                                <label>数据库名</label>
+                                <input type="text" id="dbName" placeholder="请输入数据库名">
+                            </div>
+                            <div class="form-group">
+                                <label>用户名</label>
+                                <input type="text" id="dbUser" placeholder="请输入用户名">
+                            </div>
+                            <div class="form-group">
+                                <label>密码</label>
+                                <input type="password" id="dbPassword" placeholder="请输入密码">
+                            </div>
+                            <div class="form-group">
+                                <label>查询语句</label>
+                                <textarea id="dbQuery" placeholder="请输入SQL查询语句" rows="4"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-import" id="textImportSection" style="display: none;">
+                        <textarea id="importText" placeholder="请输入要导入的知识内容..."></textarea>
+                    </div>
+                </div>
+                <div class="import-format">
+                    <h4>支持的文件格式：</h4>
+                    <ul>
+                        <li>JSON 文件（标准知识库格式）</li>
+                        <li>Markdown 文件（.md）</li>
+                        <li>文本文件（.txt）</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelImport">取消</button>
+                <button class="btn btn-primary" id="confirmImport">导入</button>
+            </div>
+        </div>
+    </div>
+    <!-- 新增知识分类对话框 -->
+    <div class="modal" id="addCategoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新增知识分类</h3>
+                <button class="btn-icon close-modal">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <div class="form-group">
+                        <label>分类名称</label>
+                        <input type="text" id="categoryName" placeholder="请输入分类名称" required>
+                    </div>
+                    <div class="form-group">
+                        <label>父级分类</label>
+                        <select id="parentCategory">
+                            <option value="">无（顶级分类）</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>分类描述</label>
+                        <textarea id="categoryDescription" placeholder="请输入分类描述" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelAddCategory">取消</button>
+                <button class="btn btn-primary" id="confirmAddCategory">确定</button>
+            </div>
+        </div>
+    </div>
+    <!-- 导出选项对话框 -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>导出知识库</h3>
+                <button class="btn-icon close-modal">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>导出格式</label>
+                    <div class="export-options">
+                        <div class="export-option">
+                            <input type="radio" id="exportFormatJson" name="exportFormat" value="json" checked>
+                            <label for="exportFormatJson">JSON 格式</label>
+                        </div>
+                        <div class="export-option">
+                            <input type="radio" id="exportFormatCsv" name="exportFormat" value="csv">
+                            <label for="exportFormatCsv">CSV 格式</label>
+                        </div>
+                        <div class="export-option">
+                            <input type="radio" id="exportFormatMarkdown" name="exportFormat" value="markdown">
+                            <label for="exportFormatMarkdown">Markdown 格式</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>导出范围</label>
+                    <div class="export-scope">
+                        <div class="export-option">
+                            <input type="radio" id="exportScopeAll" name="exportScope" value="all" checked>
+                            <label for="exportScopeAll">全部知识</label>
+                        </div>
+                        <div class="export-option">
+                            <input type="radio" id="exportScopeFiltered" name="exportScope" value="filtered">
+                            <label for="exportScopeFiltered">当前筛选结果</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelExport">取消</button>
+                <button class="btn btn-primary" id="confirmExport">导出</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="module">
+const knowledgeData = await fetch('./data/knowledge.json').then(response => response.json());
+console.log('Loaded knowledge data:', knowledgeData);
+
+const { createApp, ref, computed } = Vue;
+
+// 注册侧边栏组件
+const SidebarComponent = {
+    props: ['currentPage'],
+    template: await fetch('../components/sidebar.html').then(response => response.text())
+};
+
+const app = createApp({
+    components: {
+        'sidebar-component': SidebarComponent
+    },
+    setup() {
+        // 数据
+        const categories = ref(knowledgeData.categories);
+        const knowledgeItems = ref(knowledgeData.knowledgeItems);
+        const currentCategory = ref('');
+        const searchTerm = ref('');
+        const filterCategory = ref('');
+        const filterStatus = ref('');
+
+        // 展平分类
+        const flatCategories = computed(() => {
+            let arr = [];
+            categories.value.forEach(cat => {
+                arr.push({id: cat.id, name: cat.name});
+                if (cat.children) {
+                    arr = arr.concat(cat.children.map(child => ({id: child.id, name: child.name})));
+                }
+            });
+            return arr;
+        });
+
+        // 过滤知识
+        const filteredKnowledge = computed(() => {
+            return knowledgeItems.value.filter(item => {
+                const matchCategory = !filterCategory.value || item.category === filterCategory.value;
+                const matchStatus = !filterStatus.value || item.status === filterStatus.value;
+                const matchSearch = !searchTerm.value || item.title.includes(searchTerm.value) || item.content.includes(searchTerm.value) || (item.tags && item.tags.some(tag => tag.includes(searchTerm.value)));
+                const matchTree = !currentCategory.value || item.category === currentCategory.value;
+                return matchCategory && matchStatus && matchSearch && matchTree;
+            });
+        });
+
+        // 添加调试信息
+        console.log('Categories:', categories.value);
+        console.log('Knowledge items:', knowledgeItems.value);
+        console.log('Filtered knowledge:', filteredKnowledge.value);
+
+        // 方法
+        function selectCategory(name) {
+            currentCategory.value = name;
+        }
+        function searchKnowledge() {}
+        function showAddKnowledge() { alert('TODO: 新增知识弹窗'); }
+        function showImportModal() {
+            const modal = document.getElementById('importModal');
+            modal.style.display = 'block';
+            
+            // 添加关闭模态框的事件监听
+            const closeButtons = modal.querySelectorAll('.close-modal, #cancelImport');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+            });
+
+            // 处理导入类型切换
+            const importTypeRadios = modal.querySelectorAll('input[name="importType"]');
+            const importSections = {
+                file: document.getElementById('fileUploadSection'),
+                db: document.getElementById('dbImportSection'),
+                text: document.getElementById('textImportSection')
+            };
+
+            importTypeRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    Object.values(importSections).forEach(section => {
+                        section.style.display = 'none';
+                    });
+                    importSections[radio.value].style.display = 'block';
+                });
+            });
+
+            // 处理文件上传区域
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = fileInfo.querySelector('.file-name');
+            const removeFileBtn = fileInfo.querySelector('.remove-file');
+
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    fileName.textContent = file.name;
+                    fileInfo.style.display = 'block';
+                    uploadArea.style.display = 'none';
+                }
+            });
+
+            removeFileBtn.addEventListener('click', () => {
+                fileInput.value = '';
+                fileInfo.style.display = 'none';
+                uploadArea.style.display = 'block';
+            });
+
+            // 处理确认导入按钮
+            const confirmImportBtn = document.getElementById('confirmImport');
+            confirmImportBtn.addEventListener('click', () => {
+                const selectedType = document.querySelector('input[name="importType"]:checked').value;
+                let importData = null;
+
+                switch (selectedType) {
+                    case 'file':
+                        if (fileInput.files.length > 0) {
+                            const file = fileInput.files[0];
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                try {
+                                    importData = JSON.parse(e.target.result);
+                                    // TODO: 处理导入的数据
+                                    console.log('导入的数据:', importData);
+                                    modal.style.display = 'none';
+                                } catch (error) {
+                                    alert('文件格式错误，请确保上传的是有效的JSON文件');
+                                }
+                            };
+                            reader.readAsText(file);
+                        } else {
+                            alert('请选择要导入的文件');
+                        }
+                        break;
+                    case 'db':
+                        // TODO: 实现数据库导入逻辑
+                        alert('数据库导入功能待实现');
+                        break;
+                    case 'text':
+                        const textContent = document.getElementById('importText').value;
+                        if (textContent.trim()) {
+                            // TODO: 处理文本导入
+                            console.log('导入的文本:', textContent);
+                            modal.style.display = 'none';
+                        } else {
+                            alert('请输入要导入的文本内容');
+                        }
+                        break;
+                }
+            });
+        }
+        function exportKnowledge() {
+            const modal = document.getElementById('exportModal');
+            modal.style.display = 'block';
+            
+            // 添加关闭模态框的事件监听
+            const closeButtons = modal.querySelectorAll('.close-modal, #cancelExport');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+            });
+
+            // 处理确认导出按钮
+            const confirmExportBtn = document.getElementById('confirmExport');
+            confirmExportBtn.addEventListener('click', () => {
+                const format = document.querySelector('input[name="exportFormat"]:checked').value;
+                const scope = document.querySelector('input[name="exportScope"]:checked').value;
+                
+                // 获取要导出的数据
+                const dataToExport = scope === 'all' ? knowledgeItems.value : filteredKnowledge.value;
+                
+                let exportContent = '';
+                let fileName = '';
+                let mimeType = '';
+
+                switch (format) {
+                    case 'json':
+                        const jsonData = {
+                            categories: categories.value,
+                            knowledgeItems: dataToExport
+                        };
+                        exportContent = JSON.stringify(jsonData, null, 2);
+                        fileName = `knowledge_export_${new Date().toISOString().split('T')[0]}.json`;
+                        mimeType = 'application/json';
+                        break;
+                    
+                    case 'csv':
+                        // 转换数据为CSV格式
+                        const headers = ['标题', '分类', '内容', '标签', '状态', '创建时间'];
+                        const rows = dataToExport.map(item => [
+                            `"${item.title}"`,
+                            `"${item.category}"`,
+                            `"${item.content.replace(/"/g, '""')}"`,
+                            `"${item.tags.join(',')}"`,
+                            `"${item.status}"`,
+                            `"${item.createTime}"`
+                        ]);
+                        exportContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+                        fileName = `knowledge_export_${new Date().toISOString().split('T')[0]}.csv`;
+                        mimeType = 'text/csv';
+                        break;
+                    
+                    case 'markdown':
+                        // 转换数据为Markdown格式
+                        exportContent = dataToExport.map(item => `
+# ${item.title}
+
+**分类**: ${item.category}
+**状态**: ${item.status === 'active' ? '已发布' : '草稿'}
+**创建时间**: ${item.createTime}
+**标签**: ${item.tags.map(tag => `#${tag}`).join(' ')}
+
+${item.content}
+---
+`).join('\n');
+                        fileName = `knowledge_export_${new Date().toISOString().split('T')[0]}.md`;
+                        mimeType = 'text/markdown';
+                        break;
+                }
+
+                // 创建下载链接
+                const blob = new Blob([exportContent], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                
+                // 触发下载
+                document.body.appendChild(a);
+                a.click();
+                
+                // 清理
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // 关闭模态框
+                modal.style.display = 'none';
+            });
+        }
+        function showAddCategoryModal() { alert('TODO: 新增分类弹窗'); }
+        function editKnowledge(item) { alert('TODO: 编辑知识 ' + item.title); }
+        function deleteKnowledge(item) { if(confirm('确定删除?')) knowledgeItems.value = knowledgeItems.value.filter(k => k.id !== item.id); }
+
+        return {
+            categories,
+            knowledgeItems,
+            currentCategory,
+            searchTerm,
+            filterCategory,
+            filterStatus,
+            flatCategories,
+            filteredKnowledge,
+            selectCategory,
+            searchKnowledge,
+            showAddKnowledge,
+            showImportModal,
+            exportKnowledge,
+            showAddCategoryModal,
+            editKnowledge,
+            deleteKnowledge
+        };
+    }
+}).mount('#app');
+</script>
+<style>
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-body {
+    margin-bottom: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    color: #666;
+}
+
+.export-options, .export-scope {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.export-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.export-option input[type="radio"] {
+    margin: 0;
+}
+</style>
+</body>
+</html> 

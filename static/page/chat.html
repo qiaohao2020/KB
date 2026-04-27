@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能问答 - QuickSearch</title>
+    <link rel="stylesheet" href="../css/knowledge.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+<div id="app">
+    <div class="knowledge-container">
+        <!-- 使用公共侧边栏组件 -->
+        <sidebar-component :current-page="'chat'"></sidebar-component>
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- 聊天区域 -->
+            <div class="chat-container">
+                <div class="chat-messages" ref="messagesContainer">
+                    <div v-for="(message, index) in messages" :key="index" 
+                         :class="['message', message.type]">
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="message-sender">{{message.sender}}</span>
+                                <span class="message-time">{{message.time}}</span>
+                            </div>
+                            <div class="message-text">{{message.text}}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <textarea v-model="inputMessage" 
+                              placeholder="输入您的问题..." 
+                              @keydown.enter.prevent="sendMessage"></textarea>
+                    <button class="send-btn" @click="sendMessage">
+                        <i class="bi bi-send"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="module">
+const { createApp, ref, nextTick } = Vue;
+
+// 注册侧边栏组件
+const SidebarComponent = {
+    props: ['currentPage'],
+    template: await fetch('../components/sidebar.html').then(response => response.text())
+};
+
+const app = createApp({
+    components: {
+        'sidebar-component': SidebarComponent
+    },
+    setup() {
+        const messages = ref([]);
+        const inputMessage = ref('');
+        const messagesContainer = ref(null);
+        const isLoading = ref(false);
+
+        // 发送消息
+        async function sendMessage() {
+            if (!inputMessage.value.trim() || isLoading.value) return;
+
+            const userMessage = {
+                type: 'user',
+                sender: '用户',
+                text: inputMessage.value,
+                time: new Date().toLocaleTimeString()
+            };
+
+            messages.value.push(userMessage);
+            inputMessage.value = '';
+            isLoading.value = true;
+
+            // 滚动到底部
+            await nextTick();
+            scrollToBottom();
+
+            try {
+                // 模拟AI回复
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const aiMessage = {
+                    type: 'ai',
+                    sender: 'AI助手',
+                    text: '这是一个模拟的AI回复。实际应用中，这里应该调用AI接口获取真实回复。',
+                    time: new Date().toLocaleTimeString()
+                };
+
+                messages.value.push(aiMessage);
+            } catch (error) {
+                console.error('发送消息失败:', error);
+            } finally {
+                isLoading.value = false;
+                await nextTick();
+                scrollToBottom();
+            }
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            if (messagesContainer.value) {
+                messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+            }
+        }
+
+        return {
+            messages,
+            inputMessage,
+            messagesContainer,
+            isLoading,
+            sendMessage
+        };
+    }
+}).mount('#app');
+</script>
+<style>
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #f8f9fa;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.message {
+    margin-bottom: 20px;
+    max-width: 80%;
+}
+
+.message.user {
+    margin-left: auto;
+}
+
+.message.ai {
+    margin-right: auto;
+}
+
+.message-content {
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.message.user .message-content {
+    background-color: #e3f2fd;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.message-sender {
+    font-weight: 500;
+}
+
+.message-text {
+    line-height: 1.5;
+    color: #333;
+}
+
+.chat-input {
+    padding: 20px;
+    background-color: white;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input textarea {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    resize: none;
+    height: 60px;
+    font-size: 1em;
+}
+
+.chat-input textarea:focus {
+    outline: none;
+    border-color: #0d6efd;
+}
+
+.send-btn {
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 0 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.send-btn:hover {
+    background-color: #0b5ed7;
+}
+
+.send-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+</style>
+</body>
+</html> 
