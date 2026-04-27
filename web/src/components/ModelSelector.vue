@@ -1,16 +1,19 @@
 <template>
-  <div class="model-selector">
-    <button 
-      class="selector-btn"
-      @click="toggleDropdown"
-      :class="{ active: showDropdown }"
-      title="选择AI模型"
-    >
-      <i class="bi bi-robot"></i>
-      <span class="label">{{ selectedModel?.name || '选择模型' }}</span>
-    </button>
+  <FloatingDropdown :width="360" class="model-selector">
+    <template #trigger="{ toggle, isOpen }">
+      <button 
+        class="selector-btn"
+        @click="toggle"
+        :class="{ active: isOpen }"
+        title="选择AI模型"
+      >
+        <i class="bi bi-robot"></i>
+        <span class="label">{{ selectedModel?.name || '选择模型' }}</span>
+        <i class="bi bi-chevron-down arrow" :class="{ rotate: isOpen }"></i>
+      </button>
+    </template>
     
-    <div class="selector-dropdown" v-if="showDropdown">
+    <template #dropdown="{ close }">
       <div class="dropdown-header">
         <span>AI 模型</span>
       </div>
@@ -21,26 +24,38 @@
           :key="model.id"
           class="dropdown-item"
           :class="{ active: selectedModel?.id === model.id }"
-          @click="selectModel(model)"
+          @click="selectModel(model, close)"
         >
+          <div class="item-icon">
+            <i class="bi bi-robot"></i>
+          </div>
           <div class="item-content">
             <div class="item-name">{{ model.name }}</div>
             <div class="item-desc">{{ model.description }}</div>
-            <div class="item-status" :class="model.status">
-              {{ model.statusText }}
-            </div>
+          </div>
+          <div class="item-status" :class="model.status">
+            <i class="bi" :class="getStatusIcon(model.status)"></i>
+            {{ model.statusText }}
           </div>
         </div>
+        
+        <div v-if="models.length === 0" class="empty-state">
+          <i class="bi bi-inbox"></i>
+          <p>暂无可用模型</p>
+        </div>
       </div>
-    </div>
-  </div>
+    </template>
+  </FloatingDropdown>
 </template>
 
 <script>
-import { ref } from 'vue'
+import FloatingDropdown from './FloatingDropdown.vue'
 
 export default {
   name: 'ModelSelector',
+  components: {
+    FloatingDropdown
+  },
   props: {
     models: {
       type: Array,
@@ -53,21 +68,23 @@ export default {
   },
   emits: ['select'],
   setup(props, { emit }) {
-    const showDropdown = ref(false)
-
-    const toggleDropdown = () => {
-      showDropdown.value = !showDropdown.value
+    const selectModel = (model, close) => {
+      emit('select', model)
+      close()
     }
 
-    const selectModel = (model) => {
-      emit('select', model)
-      showDropdown.value = false
+    const getStatusIcon = (status) => {
+      const icons = {
+        available: 'bi-check-circle-fill',
+        limited: 'bi-exclamation-circle-fill',
+        unavailable: 'bi-x-circle-fill'
+      }
+      return icons[status] || 'bi-circle-fill'
     }
 
     return {
-      showDropdown,
-      toggleDropdown,
-      selectModel
+      selectModel,
+      getStatusIcon
     }
   }
 }
@@ -75,7 +92,7 @@ export default {
 
 <style scoped>
 .model-selector {
-  position: relative;
+  display: inline-block;
 }
 
 .selector-btn {
@@ -92,9 +109,7 @@ export default {
   font-weight: 500;
   transition: all 0.2s ease;
   white-space: nowrap;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: 180px;
 }
 
 .selector-btn:hover {
@@ -111,37 +126,22 @@ export default {
   flex-shrink: 0;
 }
 
+.arrow {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+  margin-left: auto;
+}
+
+.arrow.rotate {
+  transform: rotate(180deg);
+}
+
 .label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.selector-dropdown {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  margin-bottom: 8px;
-  width: 280px;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(74, 108, 247, 0.2);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  overflow: hidden;
-  animation: dropdownSlideUp 0.2s ease-out;
-}
-
-@keyframes dropdownSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  flex: 1;
+  min-width: 0;
 }
 
 .dropdown-header {
@@ -157,15 +157,15 @@ export default {
 }
 
 .dropdown-list {
-  max-height: 300px;
+  max-height: 320px;
   overflow-y: auto;
   padding: 8px;
 }
 
 .dropdown-item {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  gap: 12px;
   padding: 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -183,6 +183,24 @@ export default {
   padding-left: 9px;
 }
 
+.item-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(74, 108, 247, 0.1), rgba(102, 126, 234, 0.15));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a6cf7;
+  font-size: 18px;
+}
+
+.dropdown-item.active .item-icon {
+  background: linear-gradient(135deg, #4a6cf7, #667eea);
+  color: white;
+}
+
 .item-content {
   flex: 1;
   min-width: 0;
@@ -191,26 +209,34 @@ export default {
 .item-name {
   font-weight: 600;
   color: #2d3748;
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 2px;
 }
 
 .item-desc {
   color: #718096;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .item-status {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 9px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
   font-weight: 600;
+}
+
+.item-status i {
+  font-size: 10px;
 }
 
 .item-status.available {
@@ -226,6 +252,23 @@ export default {
 .item-status.unavailable {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #a0aec0;
+}
+
+.empty-state i {
+  font-size: 32px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.empty-state p {
+  font-size: 12px;
+  margin: 0;
 }
 
 .dropdown-list::-webkit-scrollbar {

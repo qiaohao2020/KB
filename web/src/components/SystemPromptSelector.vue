@@ -1,19 +1,22 @@
 <template>
-  <div class="system-prompt-selector">
-    <button 
-      class="selector-btn"
-      @click="toggleDropdown"
-      :class="{ active: showDropdown }"
-      title="选择系统提示词"
-    >
-      <i class="bi bi-cpu"></i>
-      <span class="label">系统提示</span>
-    </button>
+  <FloatingDropdown :width="320" class="system-prompt-selector">
+    <template #trigger="{ toggle, isOpen }">
+      <button 
+        class="selector-btn"
+        @click="toggle"
+        :class="{ active: isOpen }"
+        title="选择系统提示词"
+      >
+        <i class="bi bi-cpu"></i>
+        <span class="label">{{ selectedPrompt?.name || '系统提示' }}</span>
+        <i class="bi bi-chevron-down arrow" :class="{ rotate: isOpen }"></i>
+      </button>
+    </template>
     
-    <div class="selector-dropdown" v-if="showDropdown">
+    <template #dropdown="{ close }">
       <div class="dropdown-header">
         <span>系统提示词</span>
-        <button class="add-btn" @click="$emit('add')" title="添加新的系统提示词">
+        <button class="add-btn" @click="$emit('add'); close()" title="添加新的系统提示词">
           <i class="bi bi-plus-circle"></i>
         </button>
       </div>
@@ -24,7 +27,7 @@
           :key="prompt.id"
           class="dropdown-item"
           :class="{ active: selectedPrompt?.id === prompt.id }"
-          @click="selectPrompt(prompt)"
+          @click="selectPrompt(prompt, close)"
         >
           <div class="item-content">
             <div class="item-name">{{ prompt.name }}</div>
@@ -47,16 +50,24 @@
             </button>
           </div>
         </div>
+        
+        <div v-if="prompts.length === 0" class="empty-state">
+          <i class="bi bi-inbox"></i>
+          <p>暂无系统提示词</p>
+        </div>
       </div>
-    </div>
-  </div>
+    </template>
+  </FloatingDropdown>
 </template>
 
 <script>
-import { ref } from 'vue'
+import FloatingDropdown from './FloatingDropdown.vue'
 
 export default {
   name: 'SystemPromptSelector',
+  components: {
+    FloatingDropdown
+  },
   props: {
     prompts: {
       type: Array,
@@ -69,20 +80,12 @@ export default {
   },
   emits: ['select', 'add', 'edit', 'delete'],
   setup(props, { emit }) {
-    const showDropdown = ref(false)
-
-    const toggleDropdown = () => {
-      showDropdown.value = !showDropdown.value
-    }
-
-    const selectPrompt = (prompt) => {
+    const selectPrompt = (prompt, close) => {
       emit('select', prompt)
-      showDropdown.value = false
+      close()
     }
 
     return {
-      showDropdown,
-      toggleDropdown,
       selectPrompt
     }
   }
@@ -91,7 +94,7 @@ export default {
 
 <style scoped>
 .system-prompt-selector {
-  position: relative;
+  display: inline-block;
 }
 
 .selector-btn {
@@ -123,40 +126,26 @@ export default {
   font-size: 13px;
 }
 
+.arrow {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+  margin-left: auto;
+}
+
+.arrow.rotate {
+  transform: rotate(180deg);
+}
+
 .label {
   display: none;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (min-width: 768px) {
   .label {
     display: inline;
-  }
-}
-
-.selector-dropdown {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  margin-bottom: 8px;
-  width: 280px;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(74, 108, 247, 0.2);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  overflow: hidden;
-  animation: dropdownSlideUp 0.2s ease-out;
-}
-
-@keyframes dropdownSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -193,7 +182,7 @@ export default {
 }
 
 .dropdown-list {
-  max-height: 300px;
+  max-height: 320px;
   overflow-y: auto;
   padding: 8px;
 }
@@ -237,7 +226,9 @@ export default {
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .item-actions {
@@ -245,6 +236,8 @@ export default {
   gap: 4px;
   opacity: 0;
   transition: opacity 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .dropdown-item:hover .item-actions {
@@ -277,6 +270,23 @@ export default {
 
 .action-btn.delete:hover {
   background: rgba(239, 68, 68, 0.2);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #a0aec0;
+}
+
+.empty-state i {
+  font-size: 32px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.empty-state p {
+  font-size: 12px;
+  margin: 0;
 }
 
 .dropdown-list::-webkit-scrollbar {

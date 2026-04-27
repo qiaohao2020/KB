@@ -1,0 +1,3 @@
+@echo off
+echo Starting QuickSearch Web Application...
+npm run dev

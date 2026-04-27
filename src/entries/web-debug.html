@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickSearch - Debug</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f7fafc; height: 100vh; }
+    #app { height: 100vh; display: flex; flex-direction: column; }
+    .debug-info { background: white; padding: 20px; border-bottom: 1px solid #e2e8f0; }
+    .debug-info h2 { color: #2d3748; margin-bottom: 10px; }
+    .debug-info p { color: #718096; margin: 5px 0; font-family: monospace; font-size: 12px; }
+    .debug-info .success { color: #38a169; }
+    .debug-info .error { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="debug-info">
+      <h2>QuickSearch - 诊断信息</h2>
+      <p id="status"></p>
+      <p id="vue-version"></p>
+      <p id="router-version"></p>
+      <p id="components"></p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createApp, version } from 'vue'
+    import { createRouter, createWebHashHistory } from 'vue-router'
+    import { createPinia } from 'pinia'
+
+    // 显示版本信息
+    document.getElementById('status').innerHTML = '<span class="success">✓ 模块加载成功</span>'
+    document.getElementById('vue-version').innerHTML = `Vue 版本: ${version}`
+    document.getElementById('router-version').innerHTML = `Vue Router: 已加载`
+
+    // 尝试导入组件
+    try {
+      const ChatPage = await import('../pages/ChatPage.vue').then(m => m.default)
+      const ChatContainer = await import('../components/ChatContainer.vue').then(m => m.default)
+      const MessageInput = await import('../components/MessageInput.vue').then(m => m.default)
+      const Message = await import('../components/Message.vue').then(m => m.default)
+      const SystemPromptSelector = await import('../components/SystemPromptSelector.vue').then(m => m.default)
+      const ModelSelector = await import('../components/ModelSelector.vue').then(m => m.default)
+      const PromptDialog = await import('../components/PromptDialog.vue').then(m => m.default)
+
+      document.getElementById('components').innerHTML = `
+        <span class="success">✓ ChatPage 已加载</span><br>
+        <span class="success">✓ ChatContainer 已加载</span><br>
+        <span class="success">✓ MessageInput 已加载</span><br>
+        <span class="success">✓ Message 已加载</span><br>
+        <span class="success">✓ SystemPromptSelector 已加载</span><br>
+        <span class="success">✓ ModelSelector 已加载</span><br>
+        <span class="success">✓ PromptDialog 已加载</span>
+      `
+    } catch (error) {
+      document.getElementById('components').innerHTML = `<span class="error">✗ 组件加载失败: ${error.message}</span>`
+      console.error('组件加载错误:', error)
+    }
+  </script>
+</body>
+</html>
